@@ -1,0 +1,22 @@
+//token h file that holds variables and prototypes
+#include <iostream>
+
+using namespace std;
+
+class token{
+ public:
+  Token();
+  void setChar(char Token);
+  void setNum(int newNum);
+  char getChar();
+  int getPrec();
+  int getAssoc();
+  int getType();
+  int getNum();
+ private:
+  char token;
+  int precedence = 0;
+  int associativity = 0;
+  int type;
+  int number;
+};

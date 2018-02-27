@@ -1,0 +1,303 @@
+/*
+  Shunting-yard project
+  This program takes in a prefix mathmatical expression with spaces between each operand and operator.
+  Then it creates a binary expression tree from which it prints out prefix, infix, and postfix
+  author: Dieter Voegels
+  credit: Raveen Karnik
+*/
+#include <iostream>
+#include <vector>
+#include <cstring>
+#include <stdlib.h>
+#include <vector>
+#include "node.h"
+
+using namespace std;
+
+node* push(node* &head, token* &newToken);
+node* recursiveEnd(node* node);
+node* pop(node* &stackHead, node* queueHead);
+void expressionTree(node* current, node* currentList);
+void printPrefix(node* treeHead, vector<token*> &tokens);
+void printInfix(node* head);
+void printPostfix(node* head);
+
+int main(){
+  bool running = true;
+  char* input;
+  node* infixHead = NULL;
+  node* queueHead = NULL;
+  node* stackHead = NULL;
+  
+  while(running){
+    cout << "Enter in mathematical expression" << endl;
+    cin.getline(input,100);
+
+    //convert input string into seperate tokens (each token would either be a number(ie 838) or an operator (ie *)
+    for(int i = 0; i < strlen(input); i++){
+      //if it is a digit, then convert it into a single token
+      if(isdigit(input[i]) == true){
+	//keep track of the start of the number and the length of the number
+	int start = i;
+	int length = 1;
+	while(input[i+1] != ' '){
+	  length++;
+	  i++;
+	}
+     	//now convert the numbers into a single number
+	char* charNumber = new char[length];
+	for(int j = 0; j != length; j++){
+	  charNumber[j] = input[start+j];
+	}
+	//change char to int
+	int number = atoi(charNumber);
+	//create a token and set the number, then push it to the infix list
+	token* Token = new token;
+	Token->setNum(number);
+	infixHead = push(infixHead, Token);
+      }
+      //if it is a operator, then create a token with the char set, then push it to the infix list
+      else if (input[i] != ' '){
+	token* Token = new token;
+	Token->setChar(input[i]);
+	infixHead = push(infixHead, Token);
+      }
+    }
+    /*
+      print infix
+    node* current = infixHead;
+    while(current != NULL){
+      if(current->getToken()->getType() == 0){
+	cout << current->getToken()->getNum();
+      }
+      else{
+	cout << current->getToken()->getChar();
+      }
+      current = current->getRight();
+    }
+    cout << endl;
+    */
+    //shunting yard
+    node* current = infixHead;
+    while(current != NULL){
+      token* Token = new token;
+      Token = current->getToken();
+      /*
+	print out current token being shunted
+	
+      if(Token->getType() == 0){
+	cout << current->getToken()->getNum() << endl;
+      }
+      else{
+	cout << Token->getChar() << endl;
+      }
+      */
+      //if it is a number, push it to the queue
+      if(Token->getType() == 0){
+	queueHead = push(queueHead, Token);
+      }
+      //if it is a paranthesis
+      else if(Token->getType() > 0){
+	node* end = NULL;
+	if(Token->getType() == 2){
+	  if(Token->getChar() == '('){
+	    stackHead = push(stackHead, Token);
+	  }
+	  cout << "asdfasdf" << endl;
+	  if (Token->getChar() == ')'){
+	    cout << "break";
+	    while(recursiveEnd(stackHead)->getToken()->getType() != 2){
+	      cout << "Break";
+	      stackHead = pop(stackHead, queueHead);
+	      end = recursiveEnd(stackHead);
+	      end->getLeft()->setRight(NULL);
+	      delete end;
+	    }
+	  }
+	}
+	//if it is an operator
+	else{
+	  end = recursiveEnd(stackHead);
+	  //if the stack is not empty, then check associativity and precedence. If it is then push to the stack
+	  if(end != NULL){
+	    while(((end->getToken()->getPrec() > current->getToken()->getPrec()) ||
+		  (end->getToken()->getPrec() == current->getToken()->getPrec() &&
+		   end->getToken()->getAssoc() == 1)) &&
+		  end->getToken()->getType() != 2){
+	      stackHead = pop(stackHead, queueHead);
+	      end = recursiveEnd(stackHead);
+	      if(end == NULL){
+		break;
+	      }
+	    }
+	  }
+	  stackHead = push(stackHead, Token);
+	}
+      }
+      //pop everything out of the stack
+      current = current->getRight();
+      if(current == NULL){
+	node* end = NULL;
+	while(stackHead != NULL){
+	  stackHead = pop(stackHead, queueHead);
+	  end = recursiveEnd(stackHead);
+	}
+      }
+    }
+    /*
+      Print queue and stack
+
+    cout << "Queue:" << endl;
+    current = queueHead;
+    while(current != NULL){
+      if(current->getToken()->getType() == 0){
+	cout << current->getToken()->getNum() << endl;
+      }
+      else{
+	cout << current->getToken()->getChar() << endl;
+      }
+      current = current->getRight();
+    }
+
+    cout << "Stack:" << endl;
+    current = stackHead;
+    while(current != NULL){
+      if(current->getToken()->getType() == 0){
+	cout << current->getToken()->getNum() << endl;
+      }
+      else{
+	cout << current->getToken()->getChar() << endl;
+      }
+      current = current->getRight();
+    }
+    */
+    //Binary Expression Tree credit: Reveen
+    node* treeHead = recursiveEnd(queueHead);
+    current = queueHead;
+    while(current != NULL){
+      if(current->getToken()->getType() != 0){
+	current->setLeftChild(current->getLeft()->getLeft());
+	current->setRightChild(current->getLeft());
+	current->setLeft(current->getLeftChild()->getLeft());
+	  if(current->getLeft() != NULL){
+	    current->getLeft()->setRight(current);
+	  }
+	current->getLeftChild()->setLeft(NULL);
+	current->getLeftChild()->setRight(NULL);
+	current->getRightChild()->setLeft(NULL);
+	current->getRightChild()->setRight(NULL);
+      }
+      current = current->getRight();
+    }
+    //print out prefix notation credit: Raveen
+    vector<token*> tokens;
+    cout << "Prefix:" << endl;
+    printPrefix(treeHead, tokens);
+    for(int i = 1; i <= tokens.size(); i++){
+      if(tokens[tokens.size()-i]->getType() == 0){
+	cout << tokens[tokens.size()-i]->getNum();
+      }
+      else{
+	cout << tokens[tokens.size()-i]->getChar();
+      }
+    }
+    //print out infix credit: Raveen
+    cout << endl;
+    cout << "Infix:" << endl;
+    printInfix(treeHead);
+    cout << endl;
+    //print out postfix credit: Raveen
+    cout << "Postfix:" << endl;
+    printPostfix(treeHead);
+    cout << endl;
+  }
+}
+//push token to list function credit: Raveen
+node* push(node* &head, token* &newToken){
+  node* Node = new node(newToken);
+  
+  if (head == NULL){
+    head = Node;
+    head->setRight(NULL);
+    head->setLeft(NULL);
+  }
+  else{
+    node* end = recursiveEnd(head);
+    end->setRight(Node);
+    Node->setLeft(end);
+    Node->setRight(NULL);
+  }
+  return head;
+}
+//get the end of the list function credit: Raveen
+node* recursiveEnd(node* Node){
+  if(Node == NULL){
+    return NULL;
+  }
+  else if(Node->getRight() != NULL){
+    recursiveEnd(Node->getRight());
+  }
+  else{
+    return Node;
+  }
+}
+//pop a token from the stack to the queue
+node* pop(node* &stackHead, node* queueHead){
+  node* end = recursiveEnd(stackHead);
+  token* Token = end->getToken();
+  queueHead = push(queueHead, Token);
+  
+  if(end->getLeft() != NULL){
+    end->getLeft()->setRight(NULL);
+    delete end;
+  }
+  else{
+    delete end;
+    stackHead = NULL;
+  }
+  return stackHead;
+}
+
+void expressionTree(node* treeHead){
+  //a relic of failure
+}
+//prefix function credit: Raveen
+void printPrefix(node* head, vector<token*> &tokens){
+  if(head->getRightChild() != NULL){
+    printPrefix(head->getRightChild(), tokens);
+  }
+  if(head->getLeftChild() != NULL){
+    printPrefix(head->getLeftChild(), tokens);
+  }
+  tokens.push_back(head->getToken());
+}
+//infix function credit: Raveen
+void printInfix(node* head){
+  if(head->getLeftChild() != NULL){
+    printInfix(head->getLeftChild());
+  }
+  if(head->getToken()->getType() == 0){
+    cout << head->getToken()->getNum();
+  }
+  else{
+    cout << head->getToken()->getChar();
+  }
+  if(head->getRightChild() != NULL){
+    printInfix(head->getRightChild());
+  }
+}
+//postfix function credit Raveen
+void printPostfix(node* head){
+  if(head->getLeftChild() != NULL){
+    printPostfix(head->getLeftChild());
+  }
+  if(head->getRightChild() != NULL){
+    printPostfix(head->getRightChild());
+  }
+  if(head->getToken()->getType() == 0){
+    cout << head->getToken()->getNum();
+  }
+  else{
+    cout << head->getToken()->getChar();
+  }
+}

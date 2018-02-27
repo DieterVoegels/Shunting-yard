@@ -1,0 +1,44 @@
+#include "token.h"
+
+void token::setChar(char newToken){
+
+  token = newToken;
+  if(token == '+' || token == '-'){
+    precedence = 1;
+    associativity = 1;
+    type = 1;
+  }
+  else if(token == '*' || token == '/'){
+    precedence = 2;
+    associativity = 1;
+    type = 1;
+  }
+  else if(token == '^'){
+    precedence = 3;
+    associativity = 2;
+    type = 1;
+  }
+  else if (token == '(' || token == ')'){
+    type = 2;
+  }
+}
+
+void token::setNum(int newNum){
+  number = newNum;
+  type = 0;
+}
+char token::getChar(){
+  return token;
+}
+int token::getNum(){
+  return number;
+}
+int token::getAssoc(){
+  return associativity;
+}
+int token::getPrec(){
+  return precedence;
+}
+int token::getType(){
+  return type;
+}

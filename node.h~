@@ -1,0 +1,19 @@
+#include <iostream>
+#include "token.h"
+
+using namespace std;
+
+class node{
+ public:
+  node(token* newToken);
+  token* getToken();
+  node* getLeft();
+  node* getRight();
+  void setLeft(node* newleft);
+  void setRight(node* newRight);
+ private:
+  token* Token;
+  node* right;
+  node* left;
+  char data;
+};

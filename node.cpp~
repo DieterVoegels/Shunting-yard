@@ -1,0 +1,28 @@
+#include <iostream>
+#include "node.h"
+
+using namespace std;
+
+node::node(token* newToken){
+  Token = newToken;
+}
+
+token* node::getToken(){
+  return Token;
+}
+
+node* node::getLeft(){
+  return left;
+}
+
+node* node::getRight(){
+  return right;
+}
+
+void node::setLeft(node* newLeft){
+  left = newLeft;
+}
+
+void node::setRight(node* newRight){
+  right = newRight;
+}
